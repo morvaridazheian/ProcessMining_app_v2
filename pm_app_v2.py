@@ -1,11 +1,9 @@
-
-
 from datetime import datetime, timedelta
 import random
 import pandas as pd
 import plotly.express as px
 from dash import Dash, dcc, html, Input, Output, dash_table
-from flask import Flask
+from flask import Flask, send_file
 import base64
 import io
 import os  # Import for dynamic port setting
@@ -93,13 +91,19 @@ def visualize_loops(contents):
         for i in range(len(activities) - 1):
             G.add_edge(activities[i], activities[i + 1])
 
-    plt.figure(figsize=(6, 4))
+    # Generate the plot and save it to an in-memory buffer
+    fig, ax = plt.subplots(figsize=(6, 4))
     pos = nx.spring_layout(G)
-    nx.draw(G, pos, with_labels=True, node_color='lightblue', edge_color='gray', node_size=2000, font_size=10)
-    plt.savefig("loop_graph.png")
-    plt.close()
+    nx.draw(G, pos, with_labels=True, node_color='lightblue', edge_color='gray', node_size=2000, font_size=10, ax=ax)
+    
+    # Save the plot to a buffer and encode it as base64
+    img_buf = io.BytesIO()
+    plt.savefig(img_buf, format='png')
+    img_buf.seek(0)
+    img_base64 = base64.b64encode(img_buf.read()).decode('utf-8')
+    img_buf.close()
 
-    return "loop_graph.png"
+    return f"data:image/png;base64,{img_base64}"
 
 # ---- Process Bottlenecks ---- #
 @app.callback(Output('bottleneck-graph', 'figure'), Input('upload-data', 'contents'))
@@ -136,5 +140,5 @@ def analyze_variants(contents):
 
 # =============== Run the App =============== #
 if __name__ == '__main__':
-    port = int(os.environ.get("PORT", 10000))
+    port = int(os.environ.get("PORT", 8050))  # Correcting the port to use dynamic environment variable
     app.run_server(debug=True, port=port, host='0.0.0.0')
