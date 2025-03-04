@@ -1,5 +1,8 @@
 pandas
+plotly
+networkx
 dash
 flask
-plotly
+matplotlib
 gunicorn
+
